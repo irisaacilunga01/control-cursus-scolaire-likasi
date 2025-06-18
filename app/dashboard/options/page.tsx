@@ -1,0 +1,36 @@
+import { createClient } from "@/lib/supabase/server";
+import { redirect } from "next/navigation";
+import { getOptions } from "../../actions/options";
+import { OptionListClient } from "./option-list-client";
+export default async function OptionsPage() {
+  const supabase = await createClient();
+  const { data } = await supabase.auth.getUser();
+  if (data.user) {
+    if (data.user.role === "ecole") {
+      return redirect("/dashbord");
+    }
+  } else {
+    redirect("/auth/login");
+  }
+  // Récupération initiale des données côté serveur
+  const { data: options, success } = await getOptions();
+  if (!success) {
+    return (
+      <div className="container mx-auto pt-4">
+        <h2 className="text-2xl font-bold mb-6">Liste des Options</h2>
+        <p className="text-red-500">
+          Impossible de charger les données des options.
+        </p>
+      </div>
+    );
+  }
+  return (
+    <div className="container mx-auto pt-4">
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold  px-4">Liste des Options</h2>
+      </div>
+      {/* Passe les données initiales au composant client pour la gestion du temps réel */}
+      <OptionListClient initialOptions={options || []} />
+    </div>
+  );
+}
